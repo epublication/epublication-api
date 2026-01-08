@@ -1,6 +1,6 @@
 # Data Model
-Description here
-
+- Announcement Model
+- Configuration Model
 
   
 ```mermaid

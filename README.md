@@ -333,7 +333,7 @@ Examples: Bruno Collection here
 > - Data client
 > - Data supplier
 
-Search announcement types --> [Swagger]{:target="_blank"}(https://web.seco-amtsblattportal-dev.sdlc.aws.elca.ch/api/management/swagger-ui/index.html#/External%20Consumers%3A%20Public%20APIs/getAllAnnouncementTypeViaInterface)
+Search announcement types --> [Swagger](https://web.seco-amtsblattportal-dev.sdlc.aws.elca.ch/api/management/swagger-ui/index.html#/External%20Consumers%3A%20Public%20APIs/getAllAnnouncementTypeViaInterface)
 This API allows to search for all announcement types in the platform. It returns a paginated list of announcement types with minimal information. The response data could be used to prepare request for respective endpoints. Search parameters and pagination settings can be specified in the body. See schema description of request body on parameters for searching and pagination.
 
 # The Admin API

@@ -333,6 +333,7 @@ Examples: Bruno Collection here
 > - Data client
 > - Data supplier
 
+Search announcement types --> [Swagger](https://web.seco-amtsblattportal-dev.sdlc.aws.elca.ch/api/management/swagger-ui/index.html#/External%20Consumers%3A%20Public%20APIs/getAllAnnouncementTypeViaInterface)
 Details coming soon
 
 # The Admin API

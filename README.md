@@ -7,7 +7,8 @@
 > - Data client
 > - Data supplier
 
-[An OpenAPI description (Swagger) of the Announcement API can be found here](https://web.seco-amtsblattportal-dev.sdlc.aws.elca.ch/api/management/swagger-ui/index.html?urls.primaryName=External)
+[An OpenAPI description of the Announcement API can be found here](https://web.seco-amtsblattportal-dev.sdlc.aws.elca.ch/api/management/swagger-ui/index.html?urls.primaryName=External)
+
 Examples: Bruno Collection here
 
 ```

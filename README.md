@@ -2,6 +2,9 @@
 > If you are unfamiliar with the portal, we recommend that you read the brief [introduction](https://github.com/epublication/overview) to ePublication, regardless of your intention to use the APIs.
 # Getting started
 In this guide, we'll walk you through the basics of using the ePublication API.
+1. Create account 
+> [!IMPORTANT]
+> The MVP environment is currently available. To try it out, please contact us.
  
 # The Announcement API
 > [!TIP] 

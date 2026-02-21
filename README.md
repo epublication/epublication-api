@@ -1,6 +1,8 @@
 > [!IMPORTANT] 
 > If you are unfamiliar with the portal, we recommend that you read the brief [introduction](https://github.com/epublication/overview) to ePublication, regardless of your intention to use the APIs.
-
+# Getting started
+In this guide, we'll walk you through the basics of using the ePublication API.
+ 
 # The Announcement API
 > [!TIP] 
 > Who might be interessted in this API?

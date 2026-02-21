@@ -6,7 +6,9 @@ In this guide, we'll walk you through the basics of using the ePublication API.
 > [!IMPORTANT]
 > The MVP environment is currently available. To try it out, please contact us.
 2. Request announcement list
+> Go to [Swagger](https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements)
 3. Request announcement
+> Go to Swagger
 
  
 # The Announcement API

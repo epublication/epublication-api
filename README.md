@@ -5,6 +5,9 @@ In this guide, we'll walk you through the basics of using the ePublication API.
 1. Create account 
 > [!IMPORTANT]
 > The MVP environment is currently available. To try it out, please contact us.
+2. Request announcement list
+3. Request announcement
+
  
 # The Announcement API
 > [!TIP] 

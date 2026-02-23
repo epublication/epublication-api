@@ -1,7 +1,7 @@
 # How is this repository structured?
 
 It is advisable to first gain an overall understanding of the concept and functionality of the platform.
-If you are unfamiliar with the portal, we recommend that you read the brief [introduction](https://github.com/epublication/overview) to ePublication, regardless of your intention to use the APIs. To obtain detailed technical background information, we recommend reading the wiki for this repository.
+If you are unfamiliar with the portal, we recommend that you read the brief [introduction](https://github.com/epublication/overview) to ePublication, regardless of your intention to use the APIs. To obtain detailed technical background information, we recommend reading the [wiki](https://github.com/epublication/epublication-api/wiki) for this repository.
 # Getting started
 In this guide, we'll walk you through the basics of using the ePublication API.
 1. Establish your first connection to the ePublication API with the simple curl command below. You do not need authentication to do this, just open a command prompt (e.g. cmd on your windows computer) and paste the following curl command. As a result, you should get a list of the last 20 announcements published on epublication.ch.

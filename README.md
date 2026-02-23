@@ -4,7 +4,7 @@
 In this guide, we'll walk you through the basics of using the ePublication API.
 1. Establish your first connection to the ePublication API with the simple curl command below. You do not need authentication to do this, just open a command prompt (e.g. cmd on your windows computer) and paste the following curl command. 
 ```bash
-curl -X "POST" "https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/management/public/interface/v1/announcements" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"page\": 0, \"pageSize\": 20, \"sort\": {\"field\": \"businessId\", \"direction\": \"ASC\"}}"
+curl -X "POST" "https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/management/public/interface/v1/announcements" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"page\": 0, \"pageSize\": 20}"
 
 ```
 As a result, you should get a list of the last 20 announcements published on epublication.ch.

@@ -13,9 +13,7 @@ curl -X "POST" "https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/manage
 
 2. Create account 
 > [!IMPORTANT]
-> The MVP environment is currently available. To try it out, please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076)
- 
-) us.
+> The MVP environment is currently available. To try it out, please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076) us.
 3. Request announcement list
 
 Go to [Swagger](https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements)

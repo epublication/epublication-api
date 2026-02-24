@@ -1,4 +1,4 @@
-# How is this repository structured?
+# How to use this repository?
 
 It is advisable to first gain an overall understanding of the concept and functionality of the platform.
 If you are unfamiliar with the portal, we recommend that you read the brief [introduction](https://github.com/epublication/overview) to ePublication, regardless of your intention to use the APIs. To obtain detailed technical background information, we recommend reading the [wiki](https://github.com/epublication/epublication-api/wiki) for this repository.

@@ -2,21 +2,27 @@
 
 It is advisable to first gain an overall understanding of the concept and functionality of the platform.
 If you are unfamiliar with the portal, we recommend that you read the brief [introduction](https://github.com/epublication/overview) to ePublication, regardless of your intention to use the API. To obtain detailed technical background information, we recommend reading the [wiki](https://github.com/epublication/epublication-api/wiki) for this repository.
+
+This repository describes the external management API for ePublication. The API enables programmatic interaction for publishing announcements in official gazettes. These RESTful APIs are designed for seamless third-party integration, with interactive documentation provided via Swagger UI. Access the documentation at ePublication Swagger UI (will be accessible from March 23, 2026).
+
+
 # Getting started
-In this guide, we'll walk you through the basics of using the ePublication API.
+In this guide, we'll walk you through the basics of using the ePublication API. 
+> [!NOTE]
+> Please note that the API will not be accessible before March 23, 2026.
 1. Establish your first connection to the ePublication API with the simple curl command below. You do not need authentication to do this, just open a command prompt (e.g. cmd on your windows computer) and paste the following curl command. As a result, you should get a list of the last 20 announcements published on epublication.ch.
 ```bash
-curl -X "POST" "https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/management/public/interface/v1/announcements" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"page\": 0, \"pageSize\": 20}"
+curl -X "POST" "https://preview.epublication.ch/api/management/public/interface/v1/announcements" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"page\": 0, \"pageSize\": 20}"
 
 ```
 
 
 2. Create account 
 > [!IMPORTANT]
-> The MVP environment is currently available. To try it out, please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076) us.
+> The MVP environment will be accessible from March 23, 2026. To try it out, please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076) us. We will provide you with the necessary login information from this date onwards.
 3. Request announcement list
 
-Go to [Swagger](https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements)
+Go to [Swagger](https://preview.epublication.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements)
 
 4. Request announcement
 Go to Swagger

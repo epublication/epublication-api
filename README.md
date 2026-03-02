@@ -22,10 +22,11 @@ curl -X "POST" "https://preview.epublication.ch/api/management/public/interface/
 > The MVP environment will be accessible from March 23, 2026. To try it out, please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076) us. We will provide you with the necessary login information from this date onwards.
 3. Request announcement list
 
-Go to [Swagger](https://preview.epublication.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements)
+Go to [Swagger](https://preview.epublication.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements) (will not be accessible before March 23, 2026)
 
 4. Request announcement
-Go to Swagger
+
+Go to Swagger (will not be accessible before March 23, 2026)
 
  
 # The Announcement API
@@ -36,10 +37,10 @@ Go to Swagger
 
 [An OpenAPI description of the Announcement API can be found here](https://web.seco-amtsblattportal-dev.sdlc.aws.elca.ch/api/management/swagger-ui/index.html?urls.primaryName=External)
 
-Examples: Bruno Collection here
+Examples: (will not be accessible before March 23, 2026)
 
 ```bash
-curl -X "POST" "https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/management/public/interface/v1/announcements" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"page\": 0, \"pageSize\": 20, \"sort\": {\"field\": \"businessId\", \"direction\": \"ASC\"}}"
+curl -X "POST" "https://preview.epublication.ch/api/management/public/interface/v1/announcements" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"page\": 0, \"pageSize\": 20, \"sort\": {\"field\": \"businessId\", \"direction\": \"ASC\"}}"
 
 ```
 
@@ -50,7 +51,7 @@ curl -X "POST" "https://web.seco-amtsblattportal-int.sdlc.aws.elca.ch/api/manage
 > - Data client
 > - Data supplier
 
-Search announcement types --> [Swagger](https://web.seco-amtsblattportal-dev.sdlc.aws.elca.ch/api/management/swagger-ui/index.html#/External%20Consumers%3A%20Public%20APIs/getAllAnnouncementTypeViaInterface)
+Search announcement types --> [Swagger](https://preview.epublication.ch/api/management/swagger-ui/index.html#/External%20Consumers%3A%20Public%20APIs/getAllAnnouncementTypeViaInterface) (will not be accessible before March 23, 2026)
 This API allows to search for all announcement types in the platform. It returns a paginated list of announcement types with minimal information. The response data could be used to prepare request for respective endpoints. Search parameters and pagination settings can be specified in the body. See schema description of request body on parameters for searching and pagination.
 
 # The Admin API

@@ -10,7 +10,7 @@ This repository describes the external management API for ePublication. The API 
 In this guide, we'll walk you through the basics of using the ePublication API. 
 > [!NOTE]
 > Please note that the API will not be accessible before March 23, 2026.
-1. Establish your first connection to the ePublication API with the simple curl command below. You do not need authentication to do this, just open a command prompt (e.g. cmd on your windows computer) and paste the following curl command. As a result, you should get a list of the last 20 announcements published on epublication.ch.
+1. Establish your first connection to the ePublication API with the simple curl command below. You do not need authentication to do this, just open a command prompt (e.g. cmd on your windows computer) and paste the following curl command. As a result, you should get a list in JSON format of the last 20 announcements published on epublication.ch.
 ```bash
 curl -X "POST" "https://preview.epublication.ch/api/management/public/interface/v1/announcements" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"page\": 0, \"pageSize\": 20}"
 

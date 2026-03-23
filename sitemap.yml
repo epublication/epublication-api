@@ -1,4 +1,0 @@
-plugins:
-  - jekyll-sitemap
-url: "https://epublication.github.io"
-baseurl: "/epublication-api"

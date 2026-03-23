@@ -5,6 +5,8 @@ If you are unfamiliar with the portal, we recommend that you read the brief [int
 
 This repository describes the external management API for ePublication. The API enables programmatic interaction for publishing announcements in official gazettes. These RESTful APIs are designed for seamless third-party integration, with interactive documentation provided via Swagger UI. Access the documentation at ePublication Swagger UI.
 
+> [!NOTE]
+> The application's front end is accessible at https://preview.epublication.ch.
 
 # Getting started
 In this guide, we'll walk you through the basics of using the ePublication API. 
@@ -14,32 +16,37 @@ There are several ways to familiarize yourself with the API.
 * Send a request via cURL in the command-line interface
 * Use the predefined Bruno collection provided in this repository
 
-### Swagger 
+## Swagger
 Swagger is an open-source toolset built around the OpenAPI Specification that helps developers design, build, document, and consume RESTful web services. If you're interested in playing around and getting familiar with the API, there is no need to install local software, simply go to the public [Swagger Endpoints](https://preview.epublication.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements)
 
-<img width="1064" height="222" alt="image" src="https://github.com/user-attachments/assets/565bb38b-e100-4b79-a7bd-4635aec8b988" />
+#### Get published announcements
+No authentication is required for simply get published announcements.<br /><br />
+<img width="1064" height="222" alt="image" src="https://github.com/user-attachments/assets/565bb38b-e100-4b79-a7bd-4635aec8b988" /><br /><br />
 
-However, authentication is required for certain requests (submitting announcements, retrieving unpublished announcements). Please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076) us for demo access. With the credentials provided, you'll be able to use the following restricted endpoints.
+#### Submit announcement
+The endpoint for submitting announcements is likely to be of particular interest, Let's walk through this step by step. Authentication is required for certain requests (submitting announcements, retrieving unpublished announcements). Please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076) us for demo access. With the credentials provided, you'll be able to use the following restricted endpoints.
 
-<img width="1063" height="173" alt="image" src="https://github.com/user-attachments/assets/ccb749c8-1845-4b41-8ebf-cfe7c118ca61" />
-
-The endpoint for submitting announcements is likely to be of particular interest, Let's walk through this step by step.
+<img width="1063" height="173" alt="image" src="https://github.com/user-attachments/assets/ccb749c8-1845-4b41-8ebf-cfe7c118ca61" /><br /><br />
 
 1. Log in using the credentials provided.
-
    
-<img width="658" height="448" alt="image" src="https://github.com/user-attachments/assets/a4e5bc7e-301d-4683-a698-fdea23170ad0" />  
+<img width="658" height="448" alt="image" src="https://github.com/user-attachments/assets/a4e5bc7e-301d-4683-a698-fdea23170ad0" /><br /><br />  
 
 
 
 2. Open the endpoint "../submission" and hit "Try it out".
-
    
-<img width="1058" height="526" alt="image" src="https://github.com/user-attachments/assets/be0623ab-eecf-405d-9183-593b42404c5d" />  
+<img width="1060" height="386" alt="image" src="https://github.com/user-attachments/assets/62936713-a4da-4b94-a95c-86b681a3fcda" /><br /><br />
 
 
+3. You will now see an editable field with a white background. Delete the code in the field.
+   
+<img width="1058" height="613" alt="image" src="https://github.com/user-attachments/assets/b10d784e-a673-4eae-ac2e-edcb586e904b" /><br /><br />
+ 
 
-3. Paste the code provided below. Note: The value of "publicationDateTime" must be in the future and fall on a weekday.
+4. Paste the code provided below in the field. Note: The value of "publicationDateTime" must be in the future and fall on a weekday.
+
+
    
    
 ```json
@@ -97,11 +104,17 @@ The endpoint for submitting announcements is likely to be of particular interest
 }
 
 ```
+<br /><br />
+4. You should then get a HTTP 201 response. This means that the announcement was imported successfully.
+   
+<img width="1061" height="239" alt="image" src="https://github.com/user-attachments/assets/92354754-c7cd-4c16-abc8-5fac849a49e5" /><br /><br />
+
+5. The announcement is now published. You can view the announcement in the application's front end at https://preview.epublication.ch..
+
+<kbd><img width="1007" height="675" alt="image" src="https://github.com/user-attachments/assets/75ca342e-4f8b-485d-be51-75472094d3da" /></kbd><br /><br />
 
 
-
-
-### CLI
+## CLI
 Another easy way to establish your first connection is to use the simple curl command below. Again, no authentication is required to view a list of published announcements. Just open a command prompt (e.g. cmd on your windows computer) and paste the following curl command. As a result, you should get a list in JSON format of the last 20 announcements published on epublication.ch.  
 
 
@@ -110,7 +123,7 @@ curl -X "POST" "https://preview.epublication.ch/api/management/public/interface/
 
 ```
 
-### Bruno
+## Bruno
 
 Bruno is an open-source API client alternative to tools like Postman and Insomnia. Bruno stores your collections directly in a folder on your filesystem using a plain-text markup language. 
 

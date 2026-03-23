@@ -20,8 +20,38 @@ There are several ways to familiarize yourself with the API.
 Swagger is an open-source toolset built around the OpenAPI Specification that helps developers design, build, document, and consume RESTful web services. If you're interested in playing around and getting familiar with the API, there is no need to install local software, simply go to the public [Swagger Endpoints](https://preview.epublication.ch/api/management/swagger-ui/index.html?urls.primaryName=External#/External%20Consumers%3A%20Restricted%20APIs/searchInterfaceAnnouncements)
 
 #### Get published announcements
-No authentication is required for simply get published announcements.<br /><br />
+Getting published announcements would work step by step as follows:<br /><br />1. No authentication is required for requesting published announcements (the screenshot below shows all endpoints that do not require authentication).<br /><br />
 <img width="1064" height="222" alt="image" src="https://github.com/user-attachments/assets/565bb38b-e100-4b79-a7bd-4635aec8b988" /><br /><br />
+2. The endpoint "../announcements" can be used to get the matching announcements in a list. The list contains only metadata, such as the announcement title and the publication number. The following sample code demonstrates the filtering possibilities. Using the specified filter criteria, only those announcements that were published in Gazette A and contain the term “Sample” will be returned. You can copy/paste the code into the "request body" field and hit "Try it out".<br /><br />
+<img width="943" height="235" alt="image" src="https://github.com/user-attachments/assets/ed3d10b5-b488-4c9e-96a7-0a99a3816676" />
+<br /><br />
+A simple example requesting all publications published in "Gazette A" containing the term "Sample".
+```json
+
+{
+  "filter": {
+    "gazette": "GZA",
+    "term": "Sample"
+  },
+  "page": 0,
+  "pageSize": 20,
+  "sort": {
+    "field": "businessId",
+    "direction": "ASC"
+  }
+}
+
+```
+<br />
+The code above can be pasted into the request body field.<br /><br />
+<img width="941" height="520" alt="image" src="https://github.com/user-attachments/assets/6e9adbaf-73bc-47ec-ad91-01c671f1cacd" /><br /><br />
+If the request is successful (HTTP status 200), the list is returned as JSON.<br /><br />
+<img width="940" height="342" alt="image" src="https://github.com/user-attachments/assets/9be70225-eddb-4f74-aa19-f662f6e5f345" /><br /><br />
+3. The value of publicationNumber is then used to retrieve the detailed data of an announcement. To do this, the endpoint “../announcement/{publicationNumber}” is used. Copy the publicationNumber value in the field "publication-number".<br /><br />
+
+<img width="938" height="392" alt="image" src="https://github.com/user-attachments/assets/16e76064-a49a-4b82-9aff-d52f2c3062e3" /><br /><br />
+
+This procedure demonstrates how data retrieval should essentially be implemented
 
 #### Submit announcement
 The endpoint for submitting announcements is likely to be of particular interest, Let's walk through this step by step. Authentication is required for certain requests (submitting announcements, retrieving unpublished announcements). Please [contact](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076) us for demo access. With the credentials provided, you'll be able to use the following restricted endpoints.

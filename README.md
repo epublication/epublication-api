@@ -1,6 +1,6 @@
 # How to use this repository?
 
-This repository describes the external management API for ePublication. The API enables programmatic interaction for publishing announcements in official gazettes. These RESTful APIs are designed in accordance with the OpenAPI specification for seamless third-party integration, with interactive documentation provided via Swagger UI.
+This repository describes the external management API for ePublication. The API enables programmatic interaction for publishing announcements in official gazettes. These RESTful APIs are built in accordance with the OpenAPI specification for seamless third-party integration, with interactive documentation provided via Swagger UI.
 
 The "Getting started" tutorial is designed to require no in-depth knowledge of the concepts behind ePublication. However, it is advisable to first gain an overall understanding of the concept and functionality of the platform for the implementation of the various announcement types at a later time.
 

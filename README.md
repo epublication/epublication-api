@@ -1,9 +1,10 @@
 # How to use this repository?
 
-It is advisable to first gain an overall understanding of the concept and functionality of the platform.
-If you are unfamiliar with the portal, we recommend that you read the brief [introduction](https://github.com/epublication/overview) to ePublication, regardless of your intention to use the API. To obtain detailed technical background information, we recommend reading the [wiki](https://github.com/epublication/epublication-api/wiki) for this repository.
+This repository describes the external management API for ePublication. The API enables programmatic interaction for publishing announcements in official gazettes. These RESTful APIs are designed in accordance with the OpenAPI specification for seamless third-party integration, with interactive documentation provided via Swagger UI.
 
-This repository describes the external management API for ePublication. The API enables programmatic interaction for publishing announcements in official gazettes. These RESTful APIs are designed for seamless third-party integration, with interactive documentation provided via Swagger UI. Access the documentation at ePublication Swagger UI.
+The "Getting started" tutorial is designed to require no in-depth knowledge of the concepts behind ePublication. However, it is advisable to first gain an overall understanding of the concept and functionality of the platform for the implementation of the various announcement types at a later time.
+
+
 
 > [!NOTE]
 > The application's front end is accessible at https://preview.epublication.ch.

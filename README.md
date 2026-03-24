@@ -164,4 +164,8 @@ Import the collection provided in this repository. You can find more information
 
 
 # What's next?
-The MVP is now being continuously developed. New information and step-by-step instructions will be published continuously here.
+The MVP is now being continuously improved. New information and step-by-step instructions will be published continuously here.
+Next will be:
+- Schemes of the most important announcement types
+- Catalog of the possible keys/terms to be used
+- Catalog of the possible business cases to be used

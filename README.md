@@ -86,7 +86,7 @@ The endpoint for submitting announcements is likely to be of particular interest
   "organizationUnit": "PEA-OE01",
   "gazette": "GZA",
   "announcementType": "000",
-  "publicationPeriod": 25,
+  "publicationPeriod": 35,
   "languages": [
     "DE" 
   ],

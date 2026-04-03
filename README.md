@@ -162,6 +162,15 @@ Download Bruno: [https://www.usebruno.com](https://www.usebruno.com/)
 
 Import the collection provided in this repository. You can find more information on how to use it in the “Docs” tab within the collection.
 
+### Sample collection
+New sample imports for the following announcement types have been added to the Bruno collection:
+
+- General official announcement
+- Individual construction project
+- Notice regarding the notary register
+- Commercial register entry
+- Commencement of bankruptcy proceedings
+- Call for claims due to change in organisation
 
 # What's next?
 The MVP is now being continuously improved. New information and step-by-step instructions will be published continuously here.

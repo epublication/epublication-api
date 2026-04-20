@@ -1,0 +1,34 @@
+name: Update README Data
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Läuft automatisch jeden Tag um Mitternacht
+  push:
+    branches: [ main ] # Läuft bei jedem Push auf den Main-Branch
+  workflow_dispatch:   # Erlaubt es dir, das Skript jederzeit manuell zu starten
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Abhängigkeiten installieren
+        run: pip install requests
+
+      - name: Skript ausführen
+        run: python update_readme.py
+
+      - name: Änderungen speichern
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          git add README.md
+          git commit -m "Automatisches README Update" || exit 0
+          git push

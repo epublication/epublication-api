@@ -172,6 +172,9 @@ New sample imports for the following announcement types have been added to the B
 - Commencement of bankruptcy proceedings
 - Call for claims due to change in organisation
 
+<!-- DATA_START -->
+<!-- DATA_END -->
+
 # What's next?
 The MVP is now being continuously improved. New information and step-by-step instructions will be published continuously here.
 Next will be:

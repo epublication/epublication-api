@@ -1,4 +1,4 @@
-name: Update README Data
+name: Update README via CH-Proxy
 
 on:
   schedule:
@@ -8,43 +8,43 @@ on:
   workflow_dispatch:
 
 env:
-  # Unterdrückt die Node-Warnung und nutzt die neuere Version
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Zwingend erforderlich für Schreibzugriff
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Python einrichten
+      - name: Install Tor & Configure CH Exit
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tor
+          # Erzwinge Schweizer Exit Nodes
+          echo "ExitNodes {ch}" | sudo tee -a /etc/tor/torrc
+          echo "StrictNodes 1" | sudo tee -a /etc/tor/torrc
+          sudo service tor restart
+          # Warten, bis Tor bereit ist
+          sleep 15
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Abhängigkeiten installieren
-        run: pip install requests
+      - name: Install dependencies
+        run: pip install requests PySocks
 
-      - name: Skript ausführen
+      - name: Run Script
         run: python update_readme.py
 
-      - name: Änderungen prüfen und speichern
+      - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
-          
-          # Status prüfen (hilft bei der Fehlersuche im Log)
-          git status
-          
           git add README.md
-          
-          # Nur committen, wenn es wirklich Änderungen gibt
-          if git diff --staged --quiet; then
-            echo "Keine Änderungen an der README.md erkannt."
-          else
-            git commit -m "Automatisches README Update"
-            git push origin main
-          fi
+          git commit -m "README via Tor-CH Proxy aktualisiert" || exit 0
+          git push

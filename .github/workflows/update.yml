@@ -2,14 +2,20 @@ name: Update README Data
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Läuft automatisch jeden Tag um Mitternacht
+    - cron: '0 0 * * *'
   push:
-    branches: [ main ] # Läuft bei jedem Push auf den Main-Branch
-  workflow_dispatch:   # Erlaubt es dir, das Skript jederzeit manuell zu starten
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  # Unterdrückt die Node-Warnung und nutzt die neuere Version
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Zwingend erforderlich für Schreibzugriff
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -25,10 +31,20 @@ jobs:
       - name: Skript ausführen
         run: python update_readme.py
 
-      - name: Änderungen speichern
+      - name: Änderungen prüfen und speichern
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
+          
+          # Status prüfen (hilft bei der Fehlersuche im Log)
+          git status
+          
           git add README.md
-          git commit -m "Automatisches README Update" || exit 0
-          git push
+          
+          # Nur committen, wenn es wirklich Änderungen gibt
+          if git diff --staged --quiet; then
+            echo "Keine Änderungen an der README.md erkannt."
+          else
+            git commit -m "Automatisches README Update"
+            git push origin main
+          fi

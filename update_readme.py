@@ -3,7 +3,7 @@ import re
 import os
 
 def update_readme():
-    url = 'https://epublication.ch'
+    url = 'https://preview.epublication.ch/api/management/public/interface/v1/announcement-types'
     
     # Tor Proxy Konfiguration (lokal auf Port 9050)
     proxies = {

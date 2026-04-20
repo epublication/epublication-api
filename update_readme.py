@@ -5,7 +5,12 @@ import json
 
 def debug_update():
     url = 'https://preview.epublication.ch/api/management/public/interface/v1/announcement-types'
-    headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
+        # Ersetze den alten headers-Block durch diesen hier:
+    headers = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
     json_data = {'page': 0, 'pageSize': 20, 'sort': {'field': 'businessId', 'direction': 'ASC'}}
 
     print(f"--- DEBUG START ---")

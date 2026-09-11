@@ -18,9 +18,9 @@ categories/subcategories → new announcement types) are **not** duplicated
 in this repository. Instead, they are maintained centrally in the Help
 Center, to avoid redundancy and outdated copies:
 
-- 🇩🇪 German: [Amtsblätter der Plattform](https://helpcenter-epublication.zendesk.com/hc/de/articles/29956526113052-Amtsbl%C3%A4tter-der-Plattform)
-- 🇫🇷 French: [Bulletins officiels de la plateforme](https://helpcenter-epublication.zendesk.com/hc/fr/articles/29956526113052-Bulletins-officiels-de-la-plateforme)
-- 🇮🇹 Italian: [Gazzette ufficiali della piattaforma](https://helpcenter-epublication.zendesk.com/hc/it/articles/29956526113052-Gazzette-ufficiali-della-piattaforma)
+- 🇩🇪 German: [Kataloge](https://helpcenter-epublication.zendesk.com/hc/de/articles/28970274717084-Kataloge)
+- 🇫🇷 French: [Catalogues](https://helpcenter-epublication.zendesk.com/hc/fr/articles/28970274717084-Catalogues)
+- 🇮🇹 Italian: [Elenchi](https://helpcenter-epublication.zendesk.com/hc/it/articles/28970274717084-Elenchi)
 
 > This page does **not exist in English**. English-speaking readers need
 > to use one of the three language versions above.

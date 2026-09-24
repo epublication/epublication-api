@@ -12,6 +12,13 @@
 
 ---
 
+**Fair Use Policy**
+
+As a guideline, a single API consumer should not retrieve more than the order of magnitude of announcements per day — with typical usage (a search followed by one detail request per announcement), that corresponds to roughly 2,000–3,000 requests per day.
+
+Thank you for respecting these policies. We reserve the right to technically limit excessive or abusive usage.
+
+
 ## Table of Contents
 
 1. [Overview: Public vs. Authenticated View](#1-overview-public-vs-authenticated-view)

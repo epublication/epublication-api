@@ -42,7 +42,7 @@ Every imported announcement
 - is based on **exactly one** previously configured **announcement type**
   (`announcementTypeId`),
 - belongs to **exactly one business case** (`businessCase`) of that type,
-- contains the **content elements** (`content.elements`) defined for that
+- contains the **content elements** (`content[].elements[]`) defined for that
   type, whose structure may be defined by the `valueTypeConfig` of the
   respective announcement type (e.g. enum fields),
 - is submitted by a **publishing entity** (`publishingEntity`) whose
@@ -54,9 +54,10 @@ Every imported announcement
 
 - **Authentication:** see the dedicated [Authentication](authentication.md)
   document for the credential type, header format, and key issuance
-  process. Submission requires M2M OAuth2 client credentials via a
-  Technical User — confirmed, but **not yet live** (planned for early
-  October 2026).
+  process. Submission requires an OAuth2 access token of a **Technical
+  User** (client credentials), which a Publisher creates in the portal for
+  their Publishing Entity. The production environment is not available
+  yet; all examples use the preview environment.
 
 ---
 
@@ -66,17 +67,23 @@ Every imported announcement
    `announcementTypeId` and which `businessCase.key` matches the matter the
    third-party application wants to report? 
    The `announcementTypeId` consists of the ID of the master type and the Official Gazette ID.
+   Announcement types can be searched with `POST /public/interface/v1/announcement-types`
+   (see [Announcement Export](announcement-export.md), Section 7.1). Check the field
+   `allowAccessViaInterface` of the type definition.
    
    Example: An announcement regarding the opening of bankruptcy proceedings has the number 506. It is published in the SOGC, which has the number FEDE0001. The announcementTypeId is therefore 506-FEDE0001. The corresponding description file is available at
 https://preview.epublication.ch/api/management/public/interface/v1/announcement-types/506-FEDE0001
 
 2. **Populate the content elements according to the definition** – for each
    element defined in the announcement type's `elements[]`, supply a
-   matching value in `content.elements` and, if necessary, configure them according to to the
+   matching value in `content[].elements[]` and, if necessary, configure them according to to the
    `valueTypeConfig` structure (see [Section 7](#7-content--values-according-to-the-announcement-type-definition)).
+   If an element is an attachment, upload the file first and use the returned
+   reference (see [Section 5.2](#52-uploading-attachments)).
 3. **Submit the announcement** – send the payload to the import endpoint.
 4. **Process the response** – evaluate the response (success/validation
-   errors); on success, store the `publicationNumber` for tracking.
+   errors); on success (`201`), the response contains the announcement, including its
+   `publicationNumber`; store it for tracking (see [Section 5.3](#53-response)).
 5. **Track status** (if applicable) – see [Section 9](#9-status--tracking).
 
 ```
@@ -124,12 +131,12 @@ Third-party application                 ePublication
 ### 4.1 Authentication
 
 See [Authentication](authentication.md) for the full picture. In short:
-announcement submission (Section 5) requires **M2M OAuth2 client
-credentials** — confirmed. The credentials are obtained via a **Technical
-User**, self-service created by a Publisher for their Publishing Entity.
-This mechanism is **planned, not yet live** (target: early October 2026).
-Until it ships, the credential third-party applications should use today
-for submission is not yet confirmed.
+announcement submission (Section 5) requires an **OAuth2 access token**
+(client credentials) of a **Technical User**, which a Publisher creates in
+the portal for their Publishing Entity. The token is sent as
+`Authorization: Bearer <token>` and is valid for 12 hours. The validation
+endpoint (`/public/interface/v1/announcements/validate`) uses the
+**personal API key** of a portal user instead.
 
 ---
 
@@ -147,12 +154,11 @@ Content-Type: application/json
 | `operationId` | `submitAnnouncement` |
 | Request DTO | `AnnouncementSubmitApiDto` |
 | Success response | `201 Created` |
-| Other responses | `400`, `403`, `422`, `401`, `500` |
+| Other responses | `400`, `401`, `403`, `404`, `422`, `500` — see [Section 10](#10-error-handling--validation) |
 
-> ⚠️ **Auth note:** This endpoint lives under `/interface/v1/**` (the
-> **restricted zone**) and requires M2M OAuth2 client credentials — see
-> [Authentication](authentication.md) for the confirmed mechanism
-> (Technical Users), which is planned but **not yet live**.
+> **Auth note:** This endpoint lives under `/interface/v1/**` (the
+> **restricted zone**) and requires the access token of a Technical User —
+> see [Authentication](authentication.md).
 
 ### 5.1 Business Rules 
 
@@ -172,19 +178,91 @@ go beyond the plain field schema:
   the announcement detail. `status` must be `SUBMITTED` or `PUBLISHED`
   (the other enum values, such as `DRAFT` or `CANCELLED`, are not intended
   as submission input).
-- Content elements of type `attachment` require a **platform-relative**
-  `url` (leading slash plus UUID, e.g.
+- Content elements of type `attachmentEmbedded` or `attachmentLinked`
+  carry a **platform-relative** `url` (leading slash plus UUID, e.g.
   `/3f2a1c9e-0000-4000-8000-000000000000`); an absolute URL is rejected.
-  The reference comes from `PUT /interface/v1/announcements/attachments/upload`.
-  Note for v1.0: attachment content is not persisted yet — a download
-  currently returns a fixed placeholder document instead of the uploaded
-  file.
-- `hidden` and `hideLabel` of a content element are **read-only** — they
-  come from the element configuration of the announcement type; a value
-  submitted here is accepted but ignored.
-- `links` and `cancellationReason` are part of the v1.0 request contract
+  The reference is the response of the upload endpoint, see
+  [Section 5.2](#52-uploading-attachments). The type `attachment` no longer
+  exists.
+- `label`, `hidden` and `hideLabel` of a content element are **read-only** —
+  they come from the platform and the element configuration of the
+  announcement type; a value submitted here is accepted but ignored.
+  `key`, `type` and `values` are required. The `type` is checked against the
+  term of the element; a contradicting type is rejected.
+- Two kinds of rule apply, with different status codes: the **schema
+  gate** (a missing required field, a wrong shape) answers `400`; the
+  **business rules** (`publicityPeriod`, `plannedPublicationDate`,
+  `legalBlock`) answer `422`.
+- `links` and `cancellationReason` are part of the request contract
   but are **not yet persisted** — a submitted value is accepted and
   discarded.
+
+### 5.2 Uploading attachments
+
+Attachment files are uploaded **before** the announcement is submitted. The
+returned reference is then used as `url` of an `attachmentEmbedded` or
+`attachmentLinked` content element.
+
+```http
+PUT /interface/v1/announcements/attachments/upload
+Authorization: Bearer <access-token>
+Content-Type: multipart/form-data
+```
+
+The body has one part, `file`. The file name is kept and shown with the
+attachment. The file may be up to 100 MB; the size and file type rules of
+the element are checked when the announcement is submitted, not at upload.
+
+| Status | Meaning |
+|---|---|
+| `201` | `text/plain`: a new reference of the form `/{uuid}` in lower case. Send it exactly as returned as the `url` of the content element. This endpoint is the only way to get a reference. |
+| `400` | no `file` part, an empty file, or a file name that is empty, longer than 255 characters, or too long once URL-encoded |
+| `401` | missing or invalid credentials |
+| `403` | the credentials may not upload (read-only, or not exactly one publishing entity) |
+| `413` | the file is larger than 100 MB |
+| `422` | the file is a password-protected PDF (`errorType` `BUSINESS`, `field` `file`, `i18nKey` `announcement.attachment.pdfa.passwordProtected`). Nothing is stored. A password-protected PDF is the only file refused at upload, before the malware check. |
+| `503` | uploads are not available at the moment |
+
+**Malware check.** Each file is checked for malware first, which takes a
+few seconds. A submission sent before the check is done is refused with
+`announcement.attachment.scan.pending`. Query the state until it is `CLEAN`:
+
+```http
+GET /interface/v1/announcements/attachments/uploads/{uuid}
+Authorization: Bearer <access-token>
+```
+
+`{uuid}` is the reference **without** its leading slash. The response is
+`{ "state": "...", "reasonKey": "...", "retryable": true }`:
+
+| Field | Meaning |
+|---|---|
+| `state` | `PENDING`, `CLEAN`, `INFECTED` or `REJECTED` |
+| `reasonKey` | why the file cannot be used; absent for `PENDING` and `CLEAN` |
+| `retryable` | `true` if uploading the file again may succeed |
+
+Poll every few seconds while the state is `PENDING`. The platform sets no
+time limit, so stop after a time of your choice, for example 2 minutes.
+`400`: the reference is not a well-formed UUID. `401`/`403`/`503`: as for
+the upload. `404` (`announcement.attachment.notFound`): no file with this
+reference was uploaded for the caller's publishing entity; a reference of
+another publishing entity answers the same way.
+
+**Rules for references**
+
+- Submit within **7 days** of the upload. After that the file is removed.
+- A reference belongs to **one** announcement. To use the same file in
+  another announcement, upload it again.
+- A submission accepts only a reference uploaded for the **same publishing
+  entity**. Every Technical User of that publishing entity may use it.
+
+### 5.3 Response
+
+On success the endpoint answers `201 Created` with the announcement in the
+same structure as the authenticated detail
+(`AnnouncementAuthorizedDetailApiDto`, see
+[Announcement Export](announcement-export.md), Section 5.2). It contains the
+`publicationNumber`, which identifies the announcement from now on.
 
 ---
 
@@ -197,69 +275,61 @@ go beyond the plain field schema:
 
 ### 6.1 Schema: `AnnouncementSubmitApiDto`
 
-Confirmed from `External_OpenAPI_Spec.json`. Required fields are shown in
-bold.
+Based on the OpenAPI specification. Fields that the schema requires
+(`400` if missing) are shown in bold; fields required by a business rule
+(`422`) are marked in the description.
 
 | Field | Type | Description |
 |---|---|---|
-| **`publishingEntity`** | `PublishingEntityRef` | Per the OpenAPI ref schema: `{ publishingEntityId, uid }`, both required, `uid` must match the pattern `^CHE[1-9][0-9]{8}$` (12 characters). **A confirmed real request also includes** `organisationType` (`{ key, name }`), `publishingEntityName`, and `publishingEntityNameAddition` as embedded display fields — see the note below |
-| `responsiblePerson` | string | Name of the responsible person; returned in the authorized detail (the public detail does not show it). **Derived automatically from the submitting Technical User's Client Name** — see the note below. Not required in the request body. |
-| `apiReference` | string | ⚠️ **MOCK** – own reference, stored/returned unchanged, but without platform logic (yet) |
-| `internalReference` | string | ⚠️ **MOCK** – second own reference, visible only in the authorized detail |
-| `hasPrivacyRestrictions` | boolean | ⚠️ **MOCK** – whether the announcement contains sensitive personal data |
-| **`gazette`** | `GazetteRef` | Per the OpenAPI ref schema: `{ gazetteId }`; must have `gazetteType=INTERNAL`. An external gazette can only be used as a secondary gazette. **A confirmed real request also includes** `gazetteCategory` and `gazetteName` — see the note below |
-| **`announcementType`** | `AnnouncementTypeRef` | Per the OpenAPI ref schema: `{ type }` – business ID of the selected announcement type derivation, e.g. `"403-FEDE1000"`. **A confirmed real request also includes** an embedded `name` (multilingual) — see the note below |
-| **`publicityPeriod`** | integer | Number of days the announcement should remain publicly visible, sent on submission |
-| `publicityEndDate` | date | A confirmed real request sends this field *alongside* `publicityPeriod` on submission. Which of the two is authoritative if they conflict is unconfirmed |
-| **`languages`** | string[] | Languages supported by the announcement, `de`/`fr`/`it`/`en`, min. 1, max. 4 entries |
+| **`publishingEntity`** | `PublishingEntityRef` | `{ publishingEntityId, uid }`, both required. `uid` must match the pattern `^CHE[1-9][0-9]{8}$` (12 characters) |
+| `responsiblePerson` | string | Do not send. A value sent is ignored: the announcement is always filed under the **Client Name** of the submitting Technical User. Returned in the authorized detail only |
+| `apiReference` | string | Own reference. Stored and returned unchanged, without platform logic |
+| `internalReference` | string | Second own reference. Stored and returned unchanged, visible only in the authorized detail |
+| `hasPrivacyRestrictions` | boolean | Whether the announcement contains sensitive personal data. No platform effect yet |
+| **`gazette`** | `GazetteRef` | `{ gazetteId }`. The gazette must have `gazetteType=INTERNAL`; an external gazette can only be used as a secondary gazette |
+| **`announcementType`** | `AnnouncementTypeRef` | `{ type }` – business ID of the selected announcement type derivate, e.g. `"403-FEDE1000"` |
+| **`publicityPeriod`** | integer | Number of days the announcement should remain publicly visible. Business rule (`422`): at least 1 and within the `min`/`max` of the announcement type's `publicityPeriod` |
+| **`languages`** | string[] | Languages of the announcement, lower case `de`/`fr`/`it`/`en`, min. 1, max. 4 entries |
 | **`primaryLanguage`** | string | Primary language of the announcement (`de`/`fr`/`it`/`en`) |
-| `title` | `MultilingualTextDto` | A confirmed real request sends a multilingual `title` on submission (e.g. `{ "de": "..." }`). |
-| `legalBasis` | `MultilingualTextDto` | A confirmed real request sends this on submission. |
 | **`secondaryGazettes`** | `GazetteRef[]` | Secondary gazettes (required field, but may be empty) |
-| **`primaryTopic`** | `TopicRef` | `{ key }` – primary topic |
-| **`topics`** | `TopicRef[]` | permitted topics |
+| **`primaryTopic`** | `TopicRef` | `{ key }` – primary topic, see `GET /public/interface/v1/topics` |
+| **`topics`** | `TopicRef[]` | permitted topics, `{ key }` each |
 | `primaryAffectedCanton` | string | Canton code (enum of all 26 cantons) |
 | `affectedCantons` | string[] | affected cantons |
-| `primaryAffectedMunicipality` | `MunicipalityRef` | `{ municipalityId, name? }` – resolved via the Swiss BFS municipality number |
+| `primaryAffectedMunicipality` | `MunicipalityRef` | `{ municipalityId, name? }` – `municipalityId` (Swiss BFS municipality number) is required, `name` optional |
 | `affectedMunicipalities` | `MunicipalityRef[]` | affected municipalities |
-| **`businessCase`** | `BusinessCaseRef` | Per the OpenAPI ref schema: `{ key }`, e.g. `"application"`. **A confirmed real request also includes** an embedded `name` (multilingual) |
-| `legalBlock` | `LegalBlockApiDto` | Legal notice/contact/deadlines – required if the business case is configured with `hasLegalBlock = true` (see [5.1](#51-business-rules-from-the-spec-description)). Confirmed shape: `legalNotice` (multilingual), `deadlines[]` (`{ label, type, value }`), `contact` (multilingual, HTML allowed, e.g. `<br>` for line breaks) |
+| **`businessCase`** | `BusinessCaseRef` | `{ key }`, e.g. `"application"`. A business case that the announcement type does not declare is refused with `403` `announcement.submit.businessCaseUnauthorized` |
+| `legalBlock` | `LegalBlockApiDto` | Legal notice/contact/deadlines – required (`422`) if the business case is configured with `hasLegalBlock = true` (see [5.1](#51-business-rules)). Shape: `legalNotice` (multilingual), `deadlines[]`, `contact` (multilingual, HTML allowed, e.g. `<br>` for line breaks). The number of `deadlines` must match the business case configuration. Each deadline has `label` (multilingual), `type` and a `value` that depends on the type — see the table below |
 | **`content`** | `AnnouncementContentSubmitApiDto[]` | Content data of the announcement (array, see Section 7) |
-| `plannedPublicationDate` | date-time | Required when `status=SUBMITTED`. Format `T00:00:00` with Swiss timezone (CET/CEST), e.g. `2026-01-01T00:00:00+01:00` |
+| `plannedPublicationDate` | date-time | Required (`422`) when `status=SUBMITTED`. Format `T00:00:00` with Swiss timezone (CET/CEST), e.g. `2026-12-01T00:00:00+01:00` |
 | **`status`** | string | `SUBMITTED` (submit for processing) or `PUBLISHED` (publish immediately). Other enum values (`DRAFT`, `CANCELLED`, `HIDDEN`, `EXPIRED`, `ARCHIVED`, `STORED`, `DELETED`) are not intended as submission input per the description |
-| `links` | string[] | ⚠️ **MOCK** – publication numbers of linked announcements, not yet persisted |
-| `cancellationReason` | `MultilingualTextDto` | ⚠️ **MOCK** – reason for cancellation, not yet persisted |
+| `links` | string[] | Publication numbers of linked announcements. Not yet persisted: accepted and dropped |
+| `cancellationReason` | `MultilingualTextDto` | Reason for cancellation. Not yet persisted: accepted and dropped |
 
-> **Note:** Fields marked ⚠️ **MOCK** are, per the spec description, part
-> of the v1.0 contract but have no platform effect yet — the value is
-> accepted/stored or returned, but does not trigger any behavior yet. This
-> is different from an open/unconfirmed item: these fields are
-> deliberately specified this way, not unknown.
+**Deadline types** (`legalBlock.deadlines[].type`)
 
-> **Reference objects are richer than the bare OpenAPI ref schemas
-> suggest:** The OpenAPI spec's `PublishingEntityRef`/`GazetteRef`/
-> `AnnouncementTypeRef`/`BusinessCaseRef` schemas define only the minimal
-> identifying fields (e.g. `{ type }`, `{ gazetteId }`). However, a
-> confirmed real, working request (from a Bruno example collection) embeds
-> full display objects instead — e.g. `gazette` includes `gazetteCategory`
-> and `gazetteName`, `publishingEntity` includes `organisationType`
-> (itself `{ key, name }`) plus `publishingEntityName`/
-> `publishingEntityNameAddition`, and `announcementType`/`businessCase`
-> both include an embedded multilingual `name`. Whether the minimal
-> ref-only form is also accepted (i.e. whether the extra fields are
-> optional/ignored), or whether the full embedded form is actually
-> required, is unconfirmed. Until confirmed, prefer mirroring the full
-> form shown in [Section 8](#8-complete-example).
+| `type` | `value` |
+|---|---|
+| `DATE` | a date |
+| `DURATION` | `{ "from": "...", "to": "..." }` |
+| `DAYS` | an integer ≥ 1 |
+| `MONTHS` | an integer ≥ 1 |
+| `NOINFO` | absent |
 
-> **`responsiblePerson`:** Per business rule BR-009 of the Technical User
-> specification (see [Authentication](authentication.md)),
-> `responsiblePerson` is derived automatically from the submitting
-> Technical User's Client Name once an announcement is submitted through
-> the external API. The submitting system does **not** need to send this
-> field. Since this is tied to the Technical User mechanism, which is
-> **planned but not yet live** (target: early October 2026), treat this as
-> the target-state behavior rather than something that can be relied on
-> today.
+> **Not part of the submission contract:** `title`, `legalBasis` and
+> `publicityEndDate` are not fields of the submission request. If they are
+> sent, they are currently ignored. Do not rely on this; leave them out.
+
+> **Reference objects:** The references (`announcementType`,
+> `publishingEntity`, `gazette`, `businessCase`, `primaryTopic`/`topics`,
+> municipalities) consist only of the identifying fields shown in the table
+> above. Display names (`name`, `gazetteName`, …) are not part of the
+> contract and the platform sets them.
+
+> **`responsiblePerson`:** The field is not evaluated on submission. The
+> platform files the announcement under the Client Name of the Technical
+> User that submits it, so choose a meaningful Client Name when creating the
+> Technical User (see [Authentication](authentication.md)).
 
 ---
 
@@ -267,10 +337,10 @@ bold.
 
 > `content` is an **array with one entry per language** declared in
 > `languages`; each entry has a `language` code and an `elements` array.
-> Every element carries its `key`, a display `label`, its `type` (the
-> `Term` value type), `hidden`/`hideLabel` flags (read-only — see
-> [5.1](#51-business-rules-from-the-spec-description)), and a `values`
-> array — **always an array**, even for single scalar values.
+> Every element carries its `key`, its `type` (the `Term` value type) and a
+> `values` array — **always an array**, even for single scalar values.
+> `label`, `hidden` and `hideLabel` are set by the platform; a value sent
+> here is ignored (see [5.1](#51-business-rules)).
 
 ```json
 {
@@ -357,30 +427,59 @@ same envelope; `values` contains one HTML string:
 ### 7.3 `enum` elements
 
 For elements whose announcement type definition has an `ENUM`
-`valueTypeConfig` (see the Announcement Type documentation, Section 7.1),
-a confirmed real request supplies the **display text of the selected
-option**, not a machine key:
+`valueTypeConfig`, `values` contains the **display text of the selected
+option**, in the language of the `content` entry. The element is identified
+by its `key`; the option is identified by its text.
 
 ```json
 {
-  "key": "businessCaseType",
-  "label": "Art der Bewilligung",
+  "key": "archivingType",
   "type": "enum",
-  "hidden": false,
-  "hideLabel": false,
   "values": [
-    "Zusammengesetzten ununterbrochenen Betrieb"
+    "Die publizierende Stelle erachtet die Meldung nicht als archivierungswürdig."
   ]
 }
 ```
 
-> A confirmed real example sends the **rendered text** of the option, not
-> a machine key. Whether a machine key is also accepted, or whether the
-> display text is the only accepted form — and whether that text must
-> match exactly (including language) or is matched loosely — is
-> unconfirmed.
+The available options are listed in the `valueTypeConfig` of the element in
+the announcement type definition (`GET /public/interface/v1/announcement-types/{id}`).
 
-### 7.4 `ADDRESS` elements
+### 7.4 `person` (e.g. `primaryEntityPerson`)
+
+A `person` element carries a `personType` and the matching person object.
+Confirmed for a legal person, here with a foreign address given as free
+text in `additionalInformation` (HTML, `<br>` for line breaks):
+
+```json
+{
+  "key": "primaryEntityPerson",
+  "type": "person",
+  "values": [
+    {
+      "personType": "LEGAL",
+      "legalPerson": {
+        "name": "Foreign Sample Company Ltd.",
+        "legalForm": "0441",
+        "additionalInformation": "123 Baker Street<br>LONDON<br>W1U 6WG<br>UNITED KINGDOM"
+      }
+    }
+  ]
+}
+```
+
+### 7.5 `url`
+
+`values` contains one URL string:
+
+```json
+{
+  "key": "url",
+  "type": "url",
+  "values": [ "https://example.org/register/entry/123" ]
+}
+```
+
+### 7.6 `ADDRESS` elements
 
 For elements with `{"enableAddress": true}`, an address object is expected
 (structure analogous to 7.1); with `{"enableAddress": false}`, address
@@ -390,80 +489,74 @@ against a real request.
 > **Important:** The structural pattern in this section (envelope,
 > per-language array, `values` arrays) is confirmed from one real, working
 > example (announcement type `403-FEDE1000`). Field-level specifics for
-> other `Term` types (`string`, `date`, `PERSON`, `attachment`, …) are
+> other `Term` types (`string`, `date`, `PERSON`, …) are
 > **not yet independently verified** — please check against the actual
 > `valueTypeConfig` definition of the respective type before relying on
-> them.
+> them. Attachment elements have the types `attachmentEmbedded` and
+> `attachmentLinked`; their `url` is the reference returned by the upload
+> (see [Section 5.2](#52-uploading-attachments)).
 
 ---
 
 ## 8. Complete Example
 
-> A confirmed real, working request for announcement type
-> **`403-FEDE1000`** (Arbeitszeitbewilligung / work permit), business case
-> **`application`**, against the `FEDE1000` test gazette —
-> `publishingEntityId`/`uid` are replaced by this project's standing
-> placeholder values.
+> A working request for announcement type **`403-FEDE1000`**
+> (Arbeitszeitbewilligung / work permit), business case **`application`**,
+> against the `FEDE1000` test gazette. `publishingEntityId` and `uid` are
+> sample values.
+>
+> The `enum` element (`businessCaseType`) carries the display text of the
+> selected option, see [Section 7.3](#73-enum-elements).
 
-```json
-{
+```json{
   "hasPrivacyRestrictions": false,
-  "plannedPublicationDate": "2026-09-03T00:00:00+02:00",
-  "publicityEndDate": "2026-11-12",
+  "plannedPublicationDate": "2026-12-01T00:00:00+01:00",
   "publicityPeriod": 91,
   "announcementType": {
-    "type": "403-FEDE1000",
-    "name": {
-      "de": "Arbeitszeitbewilligung",
-      "fr": "Autorisation de travail",
-      "it": "Autorizzazione all'orario di lavoro",
-      "en": "Work permit"
-    }
+    "type": "403-FEDE1000"
   },
   "publishingEntity": {
     "publishingEntityId": "CHE-123.456.789-001",
-    "uid": "CHE123456789",
-    "organisationType": {
-      "key": "general",
-      "name": { "de": "Alle Meldungstypen" }
-    },
-    "publishingEntityName": { "de": "Sample Publishing Entity" },
-    "publishingEntityNameAddition": { "de": "Test" }
+    "uid": "CHE123456789"
   },
   "gazette": {
-    "gazetteId": "FEDE1000",
-    "gazetteCategory": "FEDERAL",
-    "gazetteName": { "de": "Test-Amtsblatt (alle Standard-Meldungstypen)" }
+    "gazetteId": "FEDE1000"
   },
   "secondaryGazettes": [],
-  "legalBasis": {
-    "de": "Es gibt keine allgemeingültige Rechtsgrundlage."
-  },
   "status": "SUBMITTED",
   "primaryTopic": {
-    "key": "employment",
-    "name": { "de": "Arbeit, Bildung und Beschaffung" }
+    "key": "employment"
   },
   "topics": [
-    { "key": "employment", "name": { "de": "Arbeit, Bildung und Beschaffung" } }
+    {
+      "key": "employment"
+    }
   ],
   "primaryAffectedCanton": "ZH",
-  "affectedCantons": ["ZH", "AG", "SH"],
-  "languages": ["de"],
+  "affectedCantons": [
+    "ZH",
+    "AG",
+    "SH"
+  ],
+  "languages": [
+    "de"
+  ],
   "primaryLanguage": "de",
-  "title": {
-    "de": "Bewilligungsgesuch, Nachtarbeit, Sample Company Ltd, Muri bei Bern"
-  },
   "businessCase": {
-    "key": "application",
-    "name": { "de": "Bewilligungsgesuch" }
+    "key": "application"
   },
   "legalBlock": {
     "legalNotice": {
       "de": "Gegen diese Verfügung kann innert 30 Tagen nach Veröffentlichung das nächsthöhere Rechtsmittel ergriffen werden."
     },
     "deadlines": [
-      { "label": { "de": "Frist" }, "type": "DAYS", "value": 30 }
+      {
+        "label": {
+          "de": "Frist"
+        },
+        "type": "DAYS",
+        "value": 30
+      }
     ],
     "contact": {
       "de": "Sample Amt, Musterabteilung<br>Musterstrasse 1<br>3000 Bern"
@@ -475,18 +568,14 @@ against a real request.
       "elements": [
         {
           "key": "businessCaseType",
-          "label": "Art der Bewilligung",
           "type": "enum",
-          "hidden": false,
-          "hideLabel": false,
-          "values": ["Zusammengesetzten ununterbrochenen Betrieb"]
+          "values": [
+            "Zusammengesetzten ununterbrochenen Betrieb"
+          ]
         },
         {
           "key": "primaryEntityLegalPerson",
-          "label": "Betroffene Organisation",
           "type": "legalPerson",
-          "hidden": false,
-          "hideLabel": false,
           "values": [
             {
               "uid": "CHE123456789",
@@ -504,11 +593,10 @@ against a real request.
         },
         {
           "key": "notice",
-          "label": "Angaben zur Bewilligung",
           "type": "textarea",
-          "hidden": false,
-          "hideLabel": false,
-          "values": ["<p>Sample publication text ...</p>"]
+          "values": [
+            "<p>Sample publication text ...</p>"
+          ]
         }
       ]
     }
@@ -517,40 +605,39 @@ against a real request.
 ```
 
 > **Note:** `responsiblePerson` is intentionally **omitted** from this
-> example — per the note above, it's derived automatically from the
-> submitting Technical User's Client Name and does not need to be sent.
->
-> Whether the minimal ref-only form (e.g.
-> `{ "gazette": { "gazetteId": "FEDE1000" } }` without `gazetteCategory`/
-> `gazetteName`) is also accepted, or whether the fuller embedded form
-> shown here is required, is unconfirmed — see
-> [Section 6.1](#61-schema-announcementsubmitapidto).
+> example — it is filed under the Client Name of the submitting Technical
+> User.
 
 ---
 
 ## 9. Status & Tracking
 
-Whether the import endpoint synchronously returns an announcement
-ID/reference number, whether there is a status lifecycle beyond
-`SUBMITTED`/`PUBLISHED` with a corresponding query endpoint, and whether
-third-party applications are notified of status changes (webhook/callback)
-or need to poll — none of this is documented here yet.
+A successful submission (`201`) returns the announcement, including its
+`publicationNumber` and `status` (see [Section 5.3](#53-response)). With
+`status = PUBLISHED` the announcement is published immediately; with
+`SUBMITTED` it is submitted for processing for the `plannedPublicationDate`.
+
+To follow an announcement afterwards, read it by its publication number with
+the authenticated detail (`GET /interface/v1/announcements/{publication-number}`)
+or search with `lastProcessingDateFrom` (see
+[Announcement Export](announcement-export.md)). Notifications about status
+changes (webhook/callback) are not documented; poll these endpoints.
 
 ---
 
 ## 10. Error Handling & Validation
 
-The exact error format (status codes, error object structure, field-level
-validation errors — especially for mismatches between the submitted
-`content` and the expected `valueTypeConfig` structure of the
-announcement type) is not documented here yet.
+Errors are returned with a status code and, for business errors, an error
+object with `errorType`, `field`, `i18nKey` and `errorMessage`. Only the
+**first** problem found is reported, not a collected list.
 
 | HTTP status | Meaning | Typical cause |
 |---|---|---|
-| `400` | not yet documented | e.g. `content` does not match the announcement type's `valueTypeConfig`; a mandatory element is missing |
-| `401` / `403` | not yet documented | Auth missing/expired, or `publishingEntity` not authorised for the announcement type |
-| `404` | not yet documented | `announcementTypeId` or `businessCase.key` does not exist |
-| `422` | not yet documented | Business validation failed (e.g. `mandatoryTopics` not covered, publicity period outside `min`/`max`) |
+| `400` | Data error / schema gate | a required field is missing (e.g. `content`), a wrong shape, or `content` does not match the element's term |
+| `401` | Not authenticated | credentials missing, or a bearer token that cannot be decoded. Checked before any authorization rule runs |
+| `403` | Not authorized | `announcement.submit.gazetteUnauthorized`, `announcement.submit.announcementTypeUnauthorized`, `announcement.submit.languagesUnauthorized`, `announcement.submit.businessCaseUnauthorized`, or the plain refusal of the role. Unlike the field checks, this family reports **one** problem — the first found |
+| `404` | Not found | the addressed resource does not exist |
+| `422` | Business rule violated | `publicityPeriod` outside the type's `min`/`max`, `plannedPublicationDate` missing for `SUBMITTED`, `legalBlock` missing or with the wrong number of deadlines |
 
 ---
 
@@ -564,8 +651,12 @@ announcement type) is not documented here yet.
 - **Handle unknown `valueTypeConfig` structures tolerantly** – if the
   third-party application works generically against multiple announcement
   types, key off the element's `Term` value rather than specific JSON
-  fields (analogous to the recommendation in the Announcement Type
-  documentation).
+  fields.
+- **Upload attachments early and check the scan state** — upload files
+  before assembling the submission, wait for `CLEAN`, and submit within 7
+  days of the upload.
+- **Reuse nothing across announcements** — an attachment reference belongs
+  to one announcement; upload the file again for another one.
 
 ---
 
@@ -573,5 +664,4 @@ announcement type) is not documented here yet.
 
 - [Runnable Bruno examples](../bruno/README.md) — try these requests directly
 - Business background document: [Standardized Announcement Types](https://helpcenter-epublication.zendesk.com/hc/de/articles/28970270476572-Standardisierte-Meldungstypen) (German)
-- API Documentation for Announcement Types (configuration of the templates) – separate document
 - [Glossary of the Announcement Standard](https://helpcenter-epublication.zendesk.com/hc/de/articles/28970039873052-Kleines-Glossar-zum-Meldungsstandard) (German)

@@ -83,6 +83,12 @@ core functionality (search + detail) but a different result scope:
 > `publicationNumber`, `publicationDateTime`, `status`. For the
 > announcement type search: `announcementTypeId`, `version`.
 
+> **operationId:** Each endpoint in this document lists its operationId
+> from the OpenAPI specification. It is the unique name of the operation,
+> independent of URL and HTTP method. You never send it in a request.
+> Code generators use it to name client methods, and you can use
+> it to find the matching operation in the specification.
+
 ---
 
 ## 4. Searching Announcements

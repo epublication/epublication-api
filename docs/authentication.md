@@ -10,80 +10,125 @@
 
 ## Overview
 
-The external API has two zones, both using the same wire format
-(`Authorization: Bearer <token>`) but with different credential types:
+The external API has two zones. Both use the same wire format
+(`Authorization: Bearer <token>`), but with different credential types:
 
-| Zone | Path prefix | Credential | Auth in requests |
+| Zone | Path prefix | Credential | Typical use |
 |---|---|---|---|
-| Public | `/public/interface/v1/**` | Personal API key issued to a registered user (personal-access-token style; no expiry, revocable) | `Authorization: Bearer <api-key>` |
-| Restricted | `/interface/v1/**` | M2M OAuth2 client-credentials token (Cognito) | `Authorization: Bearer <jwt>` |
+| Public | `/public/interface/v1/**` | **Personal API key** of a registered portal user | Search, detail and reference data (data consumers); announcement validation |
+| Restricted | `/interface/v1/**` | **M2M OAuth2 token** (client credentials) of a **Technical User** | Announcement submission (data suppliers); authenticated search and detail |
 
-Both zones use the same header, which lets third parties integrate against
-either with a single, uniform pattern (one place to configure the secret in
-any HTTP client) — mirroring the GitHub/GitLab personal-access-token model.
+**All endpoints of the external API require a credential.** Requests
+without a valid `Authorization` header are rejected with `401`.
 
-### Planned mechanism: Technical Users (Publishing Entity self-service)
+Because both zones use the same header, a third-party application can
+integrate against either with one uniform pattern: one place in any HTTP
+client where the secret is configured.
 
-> **Status: planned, not yet live.** Target: **early October 2026**. Until this ships, the current process (request credentials via Helpcenter form) should be used.
-
-Once released, a **Publisher** of a Publishing Entity will be able to
-self-service create and manage **Technical Users** — M2M clients scoped to
-that Publishing Entity:
-
-| Attribute | Value |
-|---|---|
-| Created by | Publisher (of the owning Publishing Entity) |
-| Credential | `clientId` + `clientSecret` (OIDC app client in Cognito) |
-| Token endpoint | `https://login.preview.epublication.ch/oauth2/token` — **the same endpoint for every Publishing Entity**, not entity-specific |
-| Role | `Data Supplier` |
-| Scope | The full **restricted zone** — i.e. one Technical User can be used both for announcement submission and for the authenticated search/detail endpoints described in [Announcement Export](announcement-export.md); no separate credential is needed per capability |
-| Cardinality | **One Technical User per Publishing Entity.** A third-party application that submits on behalf of multiple Publishing Entities (e.g. multiple cantons) needs a separate Technical User — and separate `clientId`/`clientSecret` — per entity |
-| Visibility of secret | Shown only once, at creation time; cannot be retrieved afterwards. If it's lost, a new Technical User must be created |
-| Limits | up to 100 Technical Users per Publishing Entity; 10,000 system-wide |
+```http
+GET /public/interface/v1/announcements/{publication-number}
+Authorization: Bearer <your-personal-api-key>
+```
 
 ```http
 POST /interface/v1/announcements/submission
-Authorization: Bearer <jwt-from-technical-user-client-credentials>
+Authorization: Bearer <access-token-of-your-technical-user>
 Content-Type: application/json
 ```
 
-> **Note:** Provider-Admin/Provider-Supporter roles will only be able to
-> view and delete Technical Users, not create them — creation is
-> Publisher-only, so that only the Publisher ever sees the client secret.
+> **Base URL:** the paths in this documentation are relative to
+> `https://preview.epublication.ch/api/management` (preview environment).
 
-> **Before this ships — demo credentials on request:** A shared, static
-> `clientId`/`clientSecret` pair for the preview environment is available
-> on request via this [form](https://helpcenter-epublication.zendesk.com/hc/de/requests/new?ticket_form_id=25547817106076&tf_subject=F%C3%BCr%20MVP%20registrieren).
-> This is a shared demo credential, not a personal one — treat it
-> accordingly (don't commit it to version control, and expect it to be
-> rotated periodically).
+---
 
-## Public zone: personal API key (announcement export)
+## Environments
 
-For the public zone, a **per-user personal API key** is planned for
-announcement export as well, so that individual registered users (not just
-anonymous public access) can authenticate for export use cases. The
-detailed specification for this is not yet available.
+| Environment | Status |
+|---|---|
+| Preview | Available. Used for all examples in this documentation. |
+| Production | **Not available yet.** It will require its own, dedicated registration; credentials from the preview environment will not work there. This page will be updated when production opens. |
+
+---
+
+## Public zone: personal API key
+
+Every registered portal user can obtain a personal API key. It identifies
+the user towards the public zone. (The API specification also calls it the *interface key*.)
 
 | Attribute | Value |
 |---|---|
 | Header | `Authorization: Bearer <api-key>` |
-| Validity | not yet confirmed |
-| Server-side storage | hashed |
-| Revocable | yes |
-| Issuance (current) | no auth necessery |
-| Issuance (planned) | self-service, via a dedicated portal — spec not yet available |
+| Scope | All endpoints under `/public/interface/v1/**` |
+| Cardinality | **One API key per user** |
+| Obtained | In the portal, in the **personal user account** |
+| Server-side storage | Hashed. The key can therefore not be recovered by the operator. |
+| Revocable | Yes |
+
+How to obtain the key, and further background on delivering and retrieving
+data through the interface, is described in the Help Center article
+[Daten per Schnittstelle anliefern und beziehen](https://helpcenter-epublication.zendesk.com/hc/de/articles/28970644593052-Daten-per-Schnittstelle-anliefern-und-beziehen)
+(German).
+
+Treat the key like a password: do not commit it to version control and do
+not embed it in client-side code.
+
+---
+
+## Restricted zone: Technical User (M2M OAuth2)
+
+Announcement submission, and the authenticated variants of search and
+detail, use a **Technical User**: a machine client belonging to one
+Publishing Entity. It authenticates with the OAuth2 *client credentials*
+flow.
+
+A **Publisher** of a Publishing Entity creates and manages Technical Users
+in the portal (gear icon of the Publishing Entity → tab **Technische
+Benutzer**).
+
+| Attribute | Value |
+|---|---|
+| Created by | Publisher of the owning Publishing Entity |
+| Credential | `clientId` + `clientSecret` |
+| Token endpoint (preview) | `https://login.preview.epublication.ch/oauth2/token` – the **same endpoint for every Publishing Entity** |
+| Grant type | `client_credentials` |
+| Token validity | **12 hours.** Request a new token when it has expired (or shortly before). |
+| Role | `Data Supplier` |
+| Scope | The full **restricted zone**. One Technical User covers announcement submission as well as the authenticated search and detail endpoints; no separate credential per capability is needed. |
+| Cardinality | **One Technical User per Publishing Entity.** An application that submits for several Publishing Entities (e.g. several cantons) needs one Technical User, with its own `clientId`/`clientSecret`, per entity. |
+| Limits | Up to 100 Technical Users per Publishing Entity; 10,000 system-wide |
+| Visibility of the secret | Shown **only once**, when the Technical User is created. It cannot be retrieved afterwards; if it is lost, create a new Technical User. |
+| Client Name | Chosen at creation. It is recorded as the `responsiblePerson` of every announcement submitted with this Technical User (see [Announcement Import](announcement-import.md)). |
+
+Only the Publisher can create a Technical User, so that only the Publisher
+ever sees the client secret. Provider-Admin and Provider-Supporter roles can
+view and delete Technical Users. **Deleting a Technical User revokes its
+access immediately.**
+
+### Requesting a token
 
 ```http
-POST /public/interface/v1/announcements
-Authorization: Bearer <your-personal-api-key>
-Content-Type: application/json
+POST https://login.preview.epublication.ch/oauth2/token
+Authorization: Basic base64(<clientId>:<clientSecret>)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
 ```
 
-## Search and reference-data endpoints: no auth required
+The response contains an `access_token`, which is sent as
+`Authorization: Bearer <access_token>` to the restricted zone until it
+expires. Do not request a new token for every call; cache it for its
+validity period.
 
-All search, detail, and reference-data endpoints under
-`/public/interface/v1/**` are unauthenticated by design (see the
-Announcement Export documentation) — this is separate from the open item
-above, which concerns only the submission endpoint's actual credential
-requirement.
+The [Bruno examples](../bruno/README.md) show this flow, including
+automatic token handling.
+
+---
+
+## Which credential do I need?
+
+| I want to … | Credential |
+|---|---|
+| Search or retrieve published announcements, read reference data | Personal API key |
+| Validate an announcement payload (`/public/interface/v1/announcements/validate`) | Personal API key |
+| Submit announcements | Technical User |
+| Use the authenticated search and detail (additional fields, see [Announcement Export](announcement-export.md)) | Technical User |

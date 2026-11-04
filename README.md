@@ -21,6 +21,7 @@ Portal) external API.
 
 ## Status
 
-This documentation is under active development. Sections marked `TODO`
-are open items pending confirmation and should not be treated as final.
-See individual documents for details.
+The API-key authentication for data consumers and the Technical User
+authentication for data suppliers are live in the **preview** environment.
+The production environment is not available yet. Individual documents list
+points that are still being confirmed.
